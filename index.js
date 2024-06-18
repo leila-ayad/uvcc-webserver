@@ -17,7 +17,7 @@ console.log('starting server', cors)
 const app = express()
 app.use(cors())
 const cameras = []
-const TOTALLY_UNSUPPORTED = ['OBSBOT Tiny 4K']
+const TOTALLY_UNSUPPORTED = ['OBSBOT Tiny 4K', 'HD Webcam C615']
 /**
  * Get camera by either name, adress, or vendor ID
  * Cache cameras because making them is expensive.
