@@ -39,7 +39,8 @@ async function getCameraByIdentifier(identifier) {
     return false;
   });
   if (existingCam) {
-    return existingCam;
+    const alive = await isAlive(existingCam);
+    if (alive) return existingCam;
   }
   // Create camera
   // look through devices. This is slow and seems to hinder the subsequent requests if they happen too soon
@@ -79,6 +80,28 @@ async function getCameraByIdentifier(identifier) {
   return cam;
 }
 
+async function isAlive(cam) {
+  try {
+    await cam.get("auto_white_balance_temperature");
+    return true;
+  } catch (err) {
+    if (err.error && err.error.message.includes("LIBUSB_ERROR_NO_DEVICE")) {
+      cam.close();
+      const index = cameras.findIndex((x) => x.device.name === cam.device.name);
+      if (index !== -1) {
+        cameras.splice(index, 1);
+      }
+      return false;
+    } else {
+      console.warn(
+        `Camera ${cam.device.name} exists but error getting control:`,
+        err.message
+      );
+      return true;
+    }
+  }
+}
+
 app.get("/", (req, res) => {
   res.send("Hello World!");
 });
@@ -94,12 +117,11 @@ app.get("/info/:deviceIdentifier", async (req, res) => {
   let cam;
   try {
     cam = await getCameraByIdentifier(req.params.deviceIdentifier);
-    console.log(cam, "cam in info/:deviceIdentifier");
     const ranges = await getAllRanges(cam);
     res.send(ranges);
   } catch (err) {
     console.error(err);
-    if (err.messag) res.status(500).send(err);
+    if (err.message) res.status(500).send(err);
     return;
   }
 });
@@ -174,6 +196,6 @@ app.get("/set/:deviceIdentifier/:control/:values", async (req, res) => {
   }
 });
 
-app.listen(8080, () => {
-  console.log("Server listening on port 8080");
+app.listen(3456, () => {
+  console.log("Server listening on port 3456");
 });
