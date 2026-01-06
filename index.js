@@ -14,7 +14,7 @@ import express from "express";
 import cors from "cors";
 import UVCControl from "uvc-control";
 
-console.log("starting server leila", cors);
+console.log("starting server", cors);
 /**
  * state variables
  */
@@ -144,14 +144,31 @@ app.get("/get/:deviceIdentifier/:control", async (req, res) => {
 // app.post('/set/:deviceIdentifier/:control/:values', async (req, res) => {
 app.get("/set/:deviceIdentifier/:control/:values", async (req, res) => {
   let values = req.params.values.split(",");
+  const cam = await getCameraByIdentifier(req.params.deviceIdentifier);
+  const controlObj = await cam.get(req.params.control);
+  const currentValue = Object.values(controlObj)[0];
   console.log("setting", req.params.control, values);
+
   try {
     const cam = await getCameraByIdentifier(req.params.deviceIdentifier);
     const retVals = await cam.set(req.params.control, values);
     res.send(retVals);
   } catch (err) {
+    if (err.message.includes("LIBUSB_TRANSFER_STALL")) {
+      //recover camera
+      const retVals = await cam.set(req.params.control, [
+        currentValue.toString(),
+      ]);
+      res.send(
+        `Failed to set ${req.params.control} to ${values}. Resetting to ${retVals}`
+      );
+    } else {
+      res
+        .status(500)
+        .send(`Could not set ${req.params.control} to ${currentValue}`, err);
+    }
+
     console.error(err);
-    res.status(500).send(err);
   }
 });
 
