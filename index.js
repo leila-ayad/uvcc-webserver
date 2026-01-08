@@ -5,7 +5,7 @@
  */
 
 import {
-  timeoutPromise,
+  pause,
   getAllControls,
   getAllRanges,
   getInfoAndRange,
@@ -76,7 +76,7 @@ async function getCameraByIdentifier(identifier) {
   cameras.push(cam);
   // take a short break because a requests to this device will not work until something internal is ready
   // TODO figure out if there is some event or variable to look for that says it is ready.
-  await timeoutPromise(80);
+  await pause(80);
   return cam;
 }
 
@@ -154,7 +154,7 @@ app.get("/controls/:deviceIdentifier", async (req, res) => {
 app.get("/get/:deviceIdentifier/:control", async (req, res) => {
   try {
     const cam = await getCameraByIdentifier(req.params.deviceIdentifier);
-    await timeoutPromise(120);
+    // await pause(120);
     const retVals = await cam.get(req.params.control);
     res.send(retVals);
   } catch (err) {
@@ -169,7 +169,7 @@ app.get("/set/:deviceIdentifier/:control/:values", async (req, res) => {
   let values = req.params.values.split(",");
   const cam = await getCameraByIdentifier(req.params.deviceIdentifier);
   const controlObj = await cam.get(req.params.control);
-  console.log(controlObj);
+  console.log("controlObj", controlObj);
   const currentValue = Object.values(controlObj)[0];
   console.log("setting", req.params.control, values);
 
