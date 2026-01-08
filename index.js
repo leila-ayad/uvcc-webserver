@@ -183,9 +183,9 @@ app.get("/set/:deviceIdentifier/:control/:values", async (req, res) => {
       const retVals = await cam.set(req.params.control, [
         currentValue.toString(),
       ]);
-      res.send(
-        `Failed to set ${req.params.control} to ${values}. Resetting to ${retVals}`
-      );
+      res.status(405).json({
+        error: `Failed to set ${req.params.control} to ${values}. Resetting to ${retVals}`,
+      });
     } else {
       res
         .status(500)
